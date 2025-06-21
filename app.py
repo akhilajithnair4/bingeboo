@@ -23,32 +23,70 @@ mood_genre_map = {
     "Dreamy 🌌": ("fantasy", "Deviii, let’s escape reality for a while 🌈🦄")
 }
 
+# ---------- Page Config ----------
 st.set_page_config(page_title="BingeBoo 🍿", layout="wide")
+
+# ---------- Styles ----------
 st.markdown("""
 <style>
-body, .stApp { background-color: #000000; color: #ffffff; }
-.title-style { font-size: 2.5rem; font-weight: bold; color: #e50914; font-family: 'Segoe UI', sans-serif; }
-.subtitle-style { font-size: 1.2rem; color: #cccccc; margin-bottom: 1rem; }
-.poster-card {
-    background-color: #121212; border-radius: 10px; padding: 1rem; margin: 1rem 0.5rem;
-    width: 300px; display: inline-block; vertical-align: top;
+body, .stApp {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: 'Segoe UI', sans-serif;
 }
-.poster-card img { border-radius: 5px; width: 100%; }
-.poster-title { font-size: 1.3rem; font-weight: bold; margin-top: 0.5rem; color: #ffffff; }
-.poster-meta { font-size: 0.9rem; color: #999999; }
-.poster-overview { font-size: 0.9rem; margin-top: 0.5rem; color: #cccccc; }
+.title-style {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #e50914;
+}
+.subtitle-style {
+    font-size: 1rem;
+    color: #cccccc;
+    margin-bottom: 1rem;
+}
+.poster-card {
+    background-color: #121212;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+.poster-card img {
+    border-radius: 5px;
+    width: 10%;
+    max-height:50px;
+    object-fit: cover;
+}
+.poster-title {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+    color: #ffffff;
+}
+.poster-meta {
+    font-size: 0.8rem;
+    color: #999999;
+}
+.poster-overview {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    color: #cccccc;
+}
+@media (max-width: 768px) {
+    .poster-card img { max-height: 180px; }
+}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Session State ---
+# ---------- Session ----------
 if "mood" not in st.session_state:
     st.session_state.mood = ""
 if "genre" not in st.session_state:
     st.session_state.genre = ""
 if "trigger" not in st.session_state:
-    st.session_state.trigger = "mood"  # controls which dropdown just got changed
+    st.session_state.trigger = "mood"
 
-# --- Header ---
+# ---------- Header ----------
 st.markdown("""<div class="title-style">BingeBoo 🍿 - Top TV Picks For The Week</div>""", unsafe_allow_html=True)
 st.markdown("""<div class="subtitle-style">(Handpicked shows for Deviii, the binge queen 👸🙈)</div>""", unsafe_allow_html=True)
 
@@ -56,7 +94,6 @@ col1, col2, col3, col4 = st.columns([4, 1.5, 2, 1.5])
 with col1:
     st.markdown("**Deviii, how’s your heart today? 🥹 Let BingeBoo AI serve you a genre you love**")
 
-# --- Mood Select ---
 moods = [""] + list(mood_genre_map.keys())
 with col2:
     selected_mood = st.selectbox(
@@ -74,7 +111,6 @@ with col2:
         )
     )
 
-# --- Genre Select ---
 with col3:
     st.markdown("**Or Deviii just pick your favorite genre 🍿💫**")
 
@@ -101,13 +137,13 @@ with col4:
         )
     )
 
-# --- Determine Final Genre ---
+# ---------- Determine Genre ----------
 final_genre = st.session_state.genre
 custom_message = None
 if st.session_state.trigger == "mood" and st.session_state.mood in mood_genre_map:
     final_genre, custom_message = mood_genre_map[st.session_state.mood]
 
-# --- Fetch Shows ---
+# ---------- API Helpers ----------
 def safe_get(url, max_retries=3, timeout=10):
     for attempt in range(max_retries):
         try:
@@ -143,25 +179,33 @@ def fetch_trending_shows(genre=None):
             full_data.append(show)
     return full_data
 
-def display_posters(shows):
-    cols = st.columns(2)
-    for i, show in enumerate(shows):
-        with cols[i % 2]:
-            st.markdown("<div class='poster-card'>", unsafe_allow_html=True)
-            image_url = show.get("images", {}).get("poster", {}).get("thumb") or \
-                        "https://via.placeholder.com/300x450.png?text=No+Image"
-            st.image(image_url, use_container_width=True)
-            title = show.get("title", "Untitled")
-            year = show.get("year", "")
-            rating = show.get("rating", "N/A")
-            overview = wrap_text(show.get("overview"), 120)
-            st.markdown(f"<div class='poster-title'>{title} ({year})</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='poster-meta'>⭐ {rating:.1f}</div>" if isinstance(rating, float) else "<div class='poster-meta'>⭐ N/A</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='poster-overview'>{overview}</div>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+def get_tvmaze_poster(show_name):
+    try:
+        url = f"https://api.tvmaze.com/singlesearch/shows?q={show_name}"
+        res = requests.get(url)
+        res.raise_for_status()
+        data = res.json()
+        return data.get("image", {}).get("original", None)
+    except requests.RequestException:
+        return None
 
-# --- Render Show Results ---
+# ---------- Display Cards ----------
+def display_posters(shows):
+    for show in shows:
+        st.markdown("<div class='poster-card'>", unsafe_allow_html=True)
+        title = show.get("title", "Untitled")
+        year = show.get("year", "")
+        rating = show.get("rating", "N/A")
+        overview = wrap_text(show.get("overview"), 90)
+        image_url = get_tvmaze_poster(title) or "https://via.placeholder.com/200x300.png?text=No+Image"
+        st.image(image_url,width=200)
+        st.markdown(f"<div class='poster-title'>{title} ({year})</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='poster-meta'>⭐ {rating:.1f}</div>" if isinstance(rating, float) else "<div class='poster-meta'>⭐ N/A</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='poster-overview'>{overview}</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ---------- Show Results ----------
 if final_genre:
-    message = custom_message if custom_message else f"✨ Binging top {final_genre.title()} shows for you..."
+    message = custom_message if custom_message else f"✨ Binging top {final_genre.title()} shows for you Deviii..."
     with st.spinner(message):
         display_posters(fetch_trending_shows(final_genre))
