@@ -53,9 +53,9 @@ if "genre" not in st.session_state:
 col1, col2, col3, col4 = st.columns([4, 1.3, 2, 1.3])
 
 with col1:
-    st.markdown("<div style='font-size: 1.1rem; font-weight: bold;'>Deviii, how’s your heart today?🥹 let BingeBoo AI serve you a genre you love </div>", unsafe_allow_html=True)
+    #st.markdown("<div style='font-size: 1.1rem; font-weight: bold;'>Deviii, how’s your heart today?🥹 let BingeBoo AI serve you a genre you love </div>", unsafe_allow_html=True)
 
-    #st.markdown("**Deviii, how’s your heart today?🥹let BingeBoo AI serve you a genre you love**")
+    st.markdown("**Deviii, how’s your heart today?🥹let BingeBoo AI serve you a genre you love**")
 
 moods = ["", *mood_genre_map.keys()]
 with col2:
