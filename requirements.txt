@@ -1,8 +1,5 @@
 streamlit
-openai
 requests
-streamlit_speech_recognition
+openai
 streamlit-javascript
-streamlit-webrtc
-numpy
-av
+pydub
