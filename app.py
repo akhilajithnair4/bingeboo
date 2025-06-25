@@ -220,13 +220,18 @@ def display_shows(shows):
         """, unsafe_allow_html=True)
 
 # ✅ Corrected: Loading message based on mood dictionary
+# ✅ Corrected: Loading message logic
 current_genre = st.session_state.genre
 if current_genre and not st.session_state.shows_loaded:
-    mood_msg = st.session_state.mood_message or ""
-    with st.spinner(mood_msg if st.session_state.trigger == "mood" else f"✨ Binginggg {current_genre.title()} shows for you, Deviii..."):
+    with st.spinner(
+        "✨ Just a sec Deviii... your dreamy shows are loading ✨" if st.session_state.trigger == "voice"
+        else st.session_state.mood_message if st.session_state.trigger == "mood"
+        else f"✨ Binginggg {current_genre.title()} shows for you, Deviii..."
+    ):
         shows = fetch_trending_shows(current_genre)
         display_shows(shows)
         st.session_state.shows_loaded = True
+
 
 st.markdown("---")
 st.markdown('<div style="text-align: center; color: #666; margin-top: 2rem;">Made with 💖 for Deviii | Powered by Trakt & TVMaze APIs</div>', unsafe_allow_html=True)
