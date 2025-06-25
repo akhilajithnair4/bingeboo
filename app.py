@@ -130,8 +130,8 @@ if st.button("💖 Process My Heart") and voice_text:
                 Deviii said she feels: '{voice_text}'
                 Write a loving, encouraging message for her (max 50 words). 
                 Make it affectionate and relate to the {detected_genre} genre.
-                Include her name 'Deviii' and cute emojis. Also very lightly just mention shortly since that is your mood Binge Boo AI is recommending these shows.
-                Also she should feel pampered and like a princess.
+                Include her name 'Deviii' and cute emojis. Also very lightly just mention shortly since that is your mood this is what I recommending these shows.
+                Also she should feel pampered and like a princess and feel like a cutie.
                 """
                 msg_response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
