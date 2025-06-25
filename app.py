@@ -1,199 +1,232 @@
-# FINAL: BingeBoo 🍿💖 – Deviii's Magical Mood-Based Show App (Streamlit Cloud Compatible 🎙️)
-import streamlit as st
+# 👇 Paste this entire code in your main file
+
+import streamlit as st 
 import requests
 import textwrap
 import time
-import tempfile
-import os
-import base64
 from openai import OpenAI
-from streamlit_javascript import st_javascript
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 TRAKT_CLIENT_ID = "f85b06aee7a3b6d67e82526087422da3749e3ff0c1688b18fe39d54511cf1f1c"
-HEADERS = {"Content-Type": "application/json", "trakt-api-version": "2", "trakt-api-key": TRAKT_CLIENT_ID}
+HEADERS = {
+    "Content-Type": "application/json",
+    "trakt-api-version": "2",
+    "trakt-api-key": TRAKT_CLIENT_ID
+}
 
-# Session state init
 for key, val in {
     "mood": "", "genre": "", "trigger": "", "shows_loaded": False,
-    "mood_message": "", "custom_msg": "", "clear_msg": False
+    "mood_message": "", "custom_msg": ""
 }.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
-# Mood map
 mood_genre_map = {
     "Happy 😊": ("comedy", "Yayy! Deviii, something funny to keep the smiles going 😄"),
-    "Sad 😢": ("drama", "Deviii, don’t worry, everything will be okay 💗"),
-    "Excited 🚀": ("action", "Deviii, let’s keep that energy high with some thrills! ⚡"),
+    "Sad 😢": ("drama", "Deviii, don't worry, everything will be okay 💗"),
+    "Excited 🚀": ("action", "Deviii, let's keep that energy high with some thrills! ⚡"),
     "Romantic 💖": ("romance", "Deviii, love is in the air! 💕 Grab some tissues 😘"),
-    "Adventurous 🏝️": ("adventure", "Deviii, let’s go exploring wild worlds 🌍✨"),
+    "Adventurous 🏞️": ("adventure", "Deviii, let's go exploring wild worlds 🌍✨"),
     "Chill 😌": ("documentary", "Deviii, time to relax and learn a thing or two ☕"),
     "Scared 😱": ("horror", "Deviii, brace yourself, it's about to get spooky 👻"),
-    "Curious 🧠": ("mystery", "Deviii, let’s solve something intriguing 🔍🕵️‍♀️"),
+    "Curious 🧠": ("mystery", "Deviii, let's solve something intriguing 🔍🕵️‍♀️"),
     "Musical 🎶": ("music", "Deviii, sing along with your soul 🎤🎧"),
-    "Dreamy 🌌": ("fantasy", "Deviii, let’s escape reality for a while 🌈🧘")
+    "Dreamy 🌌": ("fantasy", "Deviii, let's escape reality for a while 🌈💄")
 }
+
 all_genres = sorted(set(g[0] for g in mood_genre_map.values()).union({
     "animation", "anime", "crime", "family", "game-show", "history", "reality",
     "science-fiction", "soap", "talk-show", "thriller", "war", "western"
 }))
 
 st.set_page_config(page_title="BingeBoo 🍿", layout="wide")
-st.markdown("""
-<style>
-    body, .stApp { background-color: black; color: white; font-family: 'Segoe UI', sans-serif; }
-    .title { color: white; font-size: 2.5rem; font-weight: bold; }
-    .section { font-size: 18px; color: white; }
-    .small { font-size: 1.1rem; color: white; }
-    .tiny { font-size: 0.95rem; color: white; margin-top: 1.5rem; }
-    label { color: white !important; font-weight: 500 !important; }
-</style>
-""", unsafe_allow_html=True)
 
-st.markdown("<div class='title'>BingeBoo 🍿 - Top TV Picks For The Week</div>", unsafe_allow_html=True)
-st.markdown("<div class='section'>(Handpicked just for Deviii, the binge queen 👸🌛)</div>", unsafe_allow_html=True)
+st.markdown("""<style>
+body, .stApp { background-color: #000; color: #fff; font-family: 'Segoe UI', sans-serif; }
+.title-style { font-size: 2.5rem; font-weight: bold; color: #e50914; text-align: center; margin-bottom: 0.5rem; }
+.subtitle-style { font-size: 1.2rem; color: #cccccc; text-align: center; margin-bottom: 2rem; }
+.poster-card { display: flex; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid #222; }
+.poster-title { font-size: 1.3rem; font-weight: bold; margin-top: 0.5rem; color: #ffffff; }
+.poster-meta { font-size: 1rem; color: #ffb800; margin: 0.5rem 0; }
+.poster-overview { font-size: 0.95rem; margin-top: 1rem; color: #cccccc; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+label { color: white !important; font-weight: 600 !important; font-size: 1.1rem !important; }
+.stButton > button {
+    background-color: #ffe6f0; color: #e50914; font-weight: bold;
+    font-size: 1.05rem; padding: 0.6rem 1.4rem; border-radius: 14px;
+    border: 2px solid #ff4da6; box-shadow: 0 0 12px #ff99cc, 0 0 20px #ff4da6;
+    transition: all 0.3s ease-in-out; font-family: 'Segoe UI', cursive;
+    text-shadow: 0 0 3px white;
+}
+.stButton > button:hover {
+    background-color: #ffccdf; color: #c70039; transform: scale(1.05);
+    box-shadow: 0 0 15px #ff4da6, 0 0 25px #ffc0cb; cursor: pointer;
+}
+</style>""", unsafe_allow_html=True)
+
+st.markdown('<div class="title-style">BingeBoo 🍿</div>', unsafe_allow_html=True)
+st.markdown('<div class="title-style">Top TV Picks For The Week</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle-style">(Handpicked shows for Deviii, the binge queen 👸✨)</div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
+
 with col1:
-    st.selectbox("💖 Deviii, how’s your heart today?",
-        [""] + list(mood_genre_map.keys()),
-        key="mood_box", on_change=lambda: st.session_state.update({
-            "mood": st.session_state.mood_box,
-            "genre": mood_genre_map.get(st.session_state.mood_box, ("", ""))[0],
-            "mood_message": mood_genre_map.get(st.session_state.mood_box, ("", ""))[1],
-            "custom_msg": "", "trigger": "mood", "shows_loaded": False
-        }))
+    st.markdown("**💖 Deviii, what little feeling is dancing in your heart today?**")
+    selected_mood = st.selectbox("", [""] + list(mood_genre_map.keys()),
+        key="mood_selector",
+        on_change=lambda: st.session_state.update({
+            "mood": st.session_state.mood_selector,
+            "genre": mood_genre_map.get(st.session_state.mood_selector, ("", ""))[0],
+            "mood_message": mood_genre_map.get(st.session_state.mood_selector, ("", ""))[1],
+            "custom_msg": "",
+            "trigger": "mood",
+            "shows_loaded": False
+        })
+    )
 
 with col2:
-    st.selectbox("🌛 Or pick your fav genre 🍿",
-        [""] + [g.title() for g in all_genres],
-        key="genre_box", on_change=lambda: st.session_state.update({
-            "genre": st.session_state.genre_box.lower(),
-            "mood": "", "mood_message": "", "custom_msg": "",
-            "trigger": "genre", "shows_loaded": False
-        }))
+    st.markdown("**🍿 Or Deviii pick your favorite genre:**")
+    selected_genre = st.selectbox("", [""] + [g.title() for g in all_genres],
+        key="genre_selector",
+        on_change=lambda: st.session_state.update({
+            "genre": st.session_state.genre_selector.lower() if st.session_state.genre_selector else "",
+            "mood": "",
+            "mood_message": "",
+            "custom_msg": "",
+            "trigger": "genre",
+            "shows_loaded": False
+        })
+    )
 
-st.markdown("<div class='small'>🎤 Tap and speak, Deviii... BingeBoo is listening 💕</div>", unsafe_allow_html=True)
+voice_text = st.text_input("✨ Deviii Just whisper it here, and BingeBoo AI will weave a dreamy watchlist only for you, princess 🌙", 
+    placeholder="e.g., 'I'm feeling romantic today' or 'I want something funny'")
 
-if st.button("🎙️ Tap to Speak"):
-    base64_audio = st_javascript("""
-        async function record() {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
-            const chunks = [];
-
-            return new Promise(resolve => {
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(chunks, { type: 'audio/webm' });
-                    const base64data = await new Promise(r => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => r(reader.result);
-                        reader.readAsDataURL(blob);
-                    });
-                    resolve(base64data);
-                };
-                mediaRecorder.start();
-                setTimeout(() => mediaRecorder.stop(), 3000);
-            });
-        }
-
-        record().then(base64 => {
-            window.parent.postMessage({ type: 'streamlit:setComponentValue', value: base64 }, '*')
-        });
-    """, key="recorder")
-
-    if base64_audio and base64_audio.startswith("data:audio/webm;base64,"):
-        audio_bytes = base64.b64decode(base64_audio.split(",")[1])
-        wav_path = os.path.join(tempfile.gettempdir(), "deviii_voice.wav")
-        with open(wav_path, "wb") as f:
-            f.write(audio_bytes)
-
-        with st.spinner("🔊 Understanding Deviii’s magical heart..."):
-            with open(wav_path, "rb") as af:
-                transcript = client.audio.transcriptions.create(
-                    model="whisper-1", file=af, response_format="text", language="en"
-                )
-                user_input = transcript.strip()
-                st.success(f"💬 You said: {user_input}")
-
-                genre_prompt = f"""Deviii just said: "{user_input}". Based on her emotional mood, choose the best TV show genre for her from this list: {', '.join(all_genres)}. Only return the genre name."""
-                genre_response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": genre_prompt}],
-                    temperature=0.3
-                )
-                genre_reply = genre_response.choices[0].message.content.strip().lower()
-                st.session_state.genre = genre_reply
+if st.button("💖 Process My Heart") and voice_text:
+    with st.spinner("🎧 BingeBoo is understanding your heart, Deviii..."):
+        try:
+            genre_prompt = f"""
+            Deviii said: "{voice_text}"
+            From these genres: {', '.join(all_genres)}
+            Which genre best matches her mood or request? Return only the genre name in lowercase.
+            """
+            genre_response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": genre_prompt}],
+                max_tokens=50,
+                temperature=0.3
+            )
+            detected_genre = genre_response.choices[0].message.content.strip().lower()
+            if detected_genre in all_genres:
+                st.session_state.genre = detected_genre
                 st.session_state.trigger = "voice"
                 st.session_state.shows_loaded = False
-
-                msg_prompt = f"""Deviii just said she feels: '{user_input}'. Write a loving one-liner in plain English that includes her name. Make it affectionate, romantic, and comforting – like something a partner madly in love would say to melt her heart. It should relate to the genre she selected and make her feel like a princess. Add cute emojis."""
+                msg_prompt = f"""
+                Deviii said she feels: '{voice_text}'
+                Write a loving, encouraging message for her (max 50 words). 
+                Make it affectionate and relate to the {detected_genre} genre.
+                Include her name 'Deviii' and cute emojis. Also very lightly just mention shortly since that is your mood Binge Boo AI is recommending these shows.
+                Also she should feel pampered and like a princess.
+                """
                 msg_response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": msg_prompt}],
+                    max_tokens=100,
                     temperature=0.7
                 )
                 st.session_state.custom_msg = msg_response.choices[0].message.content.strip()
+                st.rerun()
+            else:
+                st.warning("😅 Sorry Deviii, couldn't detect a clear genre. Try the dropdown instead!")
+        except Exception as e:
+            st.error(f"❌ Error processing your mood: {str(e)}")
 
 def safe_get(url, max_retries=3, timeout=10):
     for attempt in range(max_retries):
         try:
-            res = requests.get(url, headers=HEADERS, timeout=timeout)
-            res.raise_for_status()
-            return res
-        except requests.RequestException:
-            time.sleep(2 ** attempt)
-    return None
+            response = requests.get(url, headers=HEADERS, timeout=timeout)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as e:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+            else:
+                st.error(f"API request failed: {e}")
+                return None
 
 def fetch_trending_shows(genre=None):
     url = "https://api.trakt.tv/shows/trending"
-    if genre: url += f"?genres={genre}"
-    res = safe_get(url)
-    if not res: return []
-    shows = res.json()[:10]
-    output = []
-    for s in shows:
-        slug = s.get("show", {}).get("ids", {}).get("slug")
-        detail = safe_get(f"https://api.trakt.tv/shows/{slug}?extended=full")
-        output.append(detail.json() if detail else s.get("show", {}))
-    return output
+    if genre:
+        url += f"?genres={genre}"
+    response = safe_get(url)
+    if not response:
+        return []
+    shows_data = response.json()[:10]
+    full_shows = []
+    for entry in shows_data:
+        show = entry.get("show", {})
+        slug = show.get("ids", {}).get("slug")
+        if slug:
+            details_url = f"https://api.trakt.tv/shows/{slug}?extended=full"
+            details_response = safe_get(details_url)
+            if details_response:
+                full_shows.append(details_response.json())
+            else:
+                full_shows.append(show)
+        else:
+            full_shows.append(show)
+    return full_shows
 
 def get_tvmaze_poster(show_name):
     try:
-        url = f"https://api.tvmaze.com/singlesearch/shows?q={show_name}"
-        data = requests.get(url).json()
-        return data.get("image", {}).get("original")
-    except: return None
+        url = f"https://api.tvmaze.com/singlesearch/shows?q={show_name.replace(' ', '%20')}"
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        image_data = data.get("image", {})
+        return image_data.get("original") or image_data.get("medium")
+    except requests.RequestException:
+        return None
 
 def wrap_text(text, width=90):
-    return '\n'.join(textwrap.wrap(text or "No description available.", width=width))
+    if not text:
+        return "No description available."
+    return '\n'.join(textwrap.wrap(text, width=width))
 
 def display_shows(shows):
+    if not shows:
+        st.warning("No shows found. Please try a different genre.")
+        return
     if st.session_state.custom_msg:
-        st.markdown(f"""<div class='tiny'>{st.session_state.custom_msg}</div>""", unsafe_allow_html=True)
-    else:
-        st.markdown("""<div class='tiny'>
-            👑 Deviii, these shows are handpicked like precious gems, just for you.
-            You deserve the softest moments, the brightest laughs, and the most beautiful escapes.
-            Never forget, if I had the world to give, I’d still give *you* a little more 💞
-        </div>""", unsafe_allow_html=True)
-
+        st.markdown(f"<p style='color:white; text-align:center; font-size:1.1rem;'>{st.session_state.custom_msg}</p>", unsafe_allow_html=True)
+   
     for show in shows:
         title = show.get("title", "Untitled")
-        img = get_tvmaze_poster(title) or "https://via.placeholder.com/200x300.png?text=No+Image"
-        st.image(img, width=200)
-        st.markdown(f"**{title} ({show.get('year', '')})**")
-        rating = show.get("rating")
-        rating_str = f"{rating:.1f}" if rating else "N/A"
-        st.markdown(f"⭐ {rating_str}")
-        st.markdown(wrap_text(show.get("overview"), 90))
+        year = show.get("year", "N/A")
+        rating = show.get("rating") or 0.0
+        overview = wrap_text(show.get("overview", "No description available."))
+        poster_url = get_tvmaze_poster(title) or "https://via.placeholder.com/150x225.png?text=No+Image"
 
-# Show the results
-if st.session_state.genre and not st.session_state.shows_loaded:
-    with st.spinner("✨ Loading your dreamy shows Deviii..."):
-        shows = fetch_trending_shows(st.session_state.genre)
-    display_shows(shows)
-    st.session_state.shows_loaded = True
+        st.markdown(f"""
+        <div class="poster-card">
+            <div>
+                <img src="{poster_url}" style="width:150px; height:225px; object-fit:cover; border-radius:8px;">
+            </div>
+            <div>
+                <div class="poster-title">{title} ({year})</div>
+                <div class="poster-meta">⭐ {rating:.1f}/10</div>
+                <div class="poster-overview">{overview}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ✅ Corrected: Loading message based on mood dictionary
+current_genre = st.session_state.genre
+if current_genre and not st.session_state.shows_loaded:
+    mood_msg = st.session_state.mood_message or ""
+    with st.spinner(mood_msg if st.session_state.trigger == "mood" else f"✨ Binginggg {current_genre.title()} shows for you, Deviii..."):
+        shows = fetch_trending_shows(current_genre)
+        display_shows(shows)
+        st.session_state.shows_loaded = True
+
+st.markdown("---")
+st.markdown('<div style="text-align: center; color: #666; margin-top: 2rem;">Made with 💖 for Deviii | Powered by Trakt & TVMaze APIs</div>', unsafe_allow_html=True)
