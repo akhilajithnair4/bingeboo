@@ -1,2 +1,8 @@
 streamlit
+openai
 requests
+streamlit_speech_recognition
+streamlit-javascript
+streamlit-webrtc
+numpy
+av
