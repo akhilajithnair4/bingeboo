@@ -238,4 +238,4 @@ if current_genre and not st.session_state.shows_loaded:
         st.session_state.shows_loaded = True
 
 st.markdown("---")
-st.markdown('<div style="text-align: center; color: #666; margin-top: 2rem;">Made with 💖 for Deviii | Powered by Trakt & TVMaze APIs</div>', unsafe_allow_html=True)
+st.markdown('<div style="text-align: center; color: #666; margin-top: 2rem;">Made with 💖 for Deviii </div>', unsafe_allow_html=True)
