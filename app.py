@@ -1,6 +1,6 @@
-# 👇 Paste this entire code in your main file
+# ✅ FINAL VERSION: Mobile-Optimized BingeBoo App with Voice Input + Mood/Genre Selector + Posters Fixed
 
-import streamlit as st 
+import streamlit as st
 import requests
 import textwrap
 import time
@@ -30,9 +30,9 @@ mood_genre_map = {
     "Adventurous 🏞️": ("adventure", "Deviii, let's go exploring wild worlds 🌍✨"),
     "Chill 😌": ("documentary", "Deviii, time to relax and learn a thing or two ☕"),
     "Scared 😱": ("horror", "Deviii, brace yourself, it's about to get spooky 👻"),
-    "Curious 🧠": ("mystery", "Deviii, let's solve something intriguing 🔍🕵️‍♀️"),
+    "Curious 🧠": ("mystery", "Deviii, let's solve something intriguing 🔍🕵️"),
     "Musical 🎶": ("music", "Deviii, sing along with your soul 🎤🎧"),
-    "Dreamy 🌌": ("fantasy", "Deviii, let's escape reality for a while 🌈💄")
+    "Dreamy 🌌": ("fantasy", "Deviii, let's escape reality for a while 🌈💅")
 }
 
 all_genres = sorted(set(g[0] for g in mood_genre_map.values()).union({
@@ -42,7 +42,8 @@ all_genres = sorted(set(g[0] for g in mood_genre_map.values()).union({
 
 st.set_page_config(page_title="BingeBoo 🍿", layout="wide")
 
-st.markdown("""<style>
+st.markdown("""
+<style>
 body, .stApp { background-color: #000; color: #fff; font-family: 'Segoe UI', sans-serif; }
 .title-style { font-size: 2.5rem; font-weight: bold; color: #e50914; text-align: center; margin-bottom: 0.5rem; }
 .subtitle-style { font-size: 1.2rem; color: #cccccc; text-align: center; margin-bottom: 2rem; }
@@ -62,7 +63,12 @@ label { color: white !important; font-weight: 600 !important; font-size: 1.1rem 
     background-color: #ffccdf; color: #c70039; transform: scale(1.05);
     box-shadow: 0 0 15px #ff4da6, 0 0 25px #ffc0cb; cursor: pointer;
 }
-</style>""", unsafe_allow_html=True)
+@media (max-width: 768px) {
+    .poster-card { flex-direction: column !important; align-items: center; text-align: center; }
+    .poster-card img { width: 70vw !important; height: auto !important; }
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.markdown('<div class="title-style">BingeBoo 🍿</div>', unsafe_allow_html=True)
 st.markdown('<div class="title-style">Top TV Picks For The Week</div>', unsafe_allow_html=True)
@@ -105,7 +111,7 @@ if st.button("💖 Process My Heart") and voice_text:
     with st.spinner("🎧 BingeBoo is understanding your heart, Deviii..."):
         try:
             genre_prompt = f"""
-            Deviii said: "{voice_text}"
+            Deviii said: \"{voice_text}\"
             From these genres: {', '.join(all_genres)}
             Which genre best matches her mood or request? Return only the genre name in lowercase.
             """
@@ -198,7 +204,7 @@ def display_shows(shows):
         return
     if st.session_state.custom_msg:
         st.markdown(f"<p style='color:white; text-align:center; font-size:1.1rem;'>{st.session_state.custom_msg}</p>", unsafe_allow_html=True)
-   
+
     for show in shows:
         title = show.get("title", "Untitled")
         year = show.get("year", "N/A")
@@ -219,7 +225,6 @@ def display_shows(shows):
         </div>
         """, unsafe_allow_html=True)
 
-# ✅ Corrected: Loading message based on mood dictionary
 # ✅ Corrected: Loading message logic
 current_genre = st.session_state.genre
 if current_genre and not st.session_state.shows_loaded:
@@ -231,7 +236,6 @@ if current_genre and not st.session_state.shows_loaded:
         shows = fetch_trending_shows(current_genre)
         display_shows(shows)
         st.session_state.shows_loaded = True
-
 
 st.markdown("---")
 st.markdown('<div style="text-align: center; color: #666; margin-top: 2rem;">Made with 💖 for Deviii | Powered by Trakt & TVMaze APIs</div>', unsafe_allow_html=True)
